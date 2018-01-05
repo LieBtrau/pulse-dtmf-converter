@@ -1,0 +1,10 @@
+{
+  "builtInLibrariesFolders": "/home/ctack/Programs/arduino-1.8.5/libraries",
+  "customBuildProperties": "build.warn_data_percentage=75,runtime.tools.avrdude.path=/home/ctack/.arduino15/packages/arduino/tools/avrdude/6.3.0-arduino9,runtime.tools.arduinoOTA.path=/home/ctack/.arduino15/packages/arduino/tools/arduinoOTA/1.1.1,runtime.tools.avr-gcc.path=/home/ctack/.arduino15/packages/arduino/tools/avr-gcc/4.9.2-atmel3.5.4-arduino2",
+  "fqbn": "adafruit:avr:protrinket3ftdi",
+  "hardwareFolders": "/home/ctack/Programs/arduino-1.8.5/hardware,/home/ctack/.arduino15/packages",
+  "otherLibrariesFolders": "/home/ctack/Arduino/libraries",
+  "runtime.ide.version": "10805",
+  "sketchLocation": "/home/ctack/git/pulse-dtmf-converter/Firmware/pulse-dtmf-converter/pulse-dtmf-converter.ino",
+  "toolsFolders": "/home/ctack/Programs/arduino-1.8.5/tools-builder,/home/ctack/Programs/arduino-1.8.5/hardware/tools/avr,/home/ctack/.arduino15/packages"
+}
