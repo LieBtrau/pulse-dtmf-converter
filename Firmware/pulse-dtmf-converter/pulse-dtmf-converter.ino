@@ -37,14 +37,7 @@ void setup()
     Serial.println("start");
     ulTimer=millis();
     dtmf.init();
-    if(dtmf.generateTone('1'))
-    {
-        Serial.println("OK");
-    }else
-    {
-        Serial.println("fail");
-    }
-
+    dtmf.generateTone('0');
 }
 
 void loop()
