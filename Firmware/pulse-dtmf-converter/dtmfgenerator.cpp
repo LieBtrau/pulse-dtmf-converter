@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.#ifndef DTMFGENERATOR_H
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Based on :
     http://interface.khm.de/index.php/lab/interfaces-advanced/arduino-dds-sinewave-generator
@@ -21,9 +21,9 @@ Based on :
 */
 
 #include "dtmfgenerator.h"
-#include "avr/pgmspace.h"
 
-static const byte sine256[] PROGMEM =
+//Sine samples LUT : one period sampled on 128 samples and quantized on 7 bit
+static const byte sine128[] PROGMEM =
 {
     64,67,70,73,76,79,82,85,88,91,94,96,99,102,104,106,109,111,113,115,117,118,120,
     121,123,124,125,126,126,127,127,127,127,127,127,127,126,126,125,124,123,121,120,
@@ -31,21 +31,22 @@ static const byte sine256[] PROGMEM =
     54,51,48,45,42,39,36,33,31,28,25,23,21,18,16,14,12,10,9,7,6,4,3,2,1,1,0,0,0,0,0,
     0,0,1,1,2,3,4,6,7,9,10,12,14,16,18,21,23,25,28,31,33,36,39,42,45,48,51,54,57,60
 };
-//Precalculating DDS tuning word for efficiency
-//tword_m = pow(2,bitwidth) * dfreq / refclk;
-//  where refclk = F_CPU / 256 for fast PWM
-//  where dfreq = desired frequency
-//  where bitwidth = number of bits in tuning word
-//  dtmf frequencies in Hz = {697,770,852,941,1209,1336,1477,1633};
+//Precalculating DDS tuning words:
+//  tword_m = pow(2,bitwidth) * dfreq / refclk;
+//      where refclk = F_CPU / 256 for fast PWM, in [Hz]
+//      where dfreq = desired frequency, in [Hz]
+//      where bitwidth = number of bits in tuning word
+//
+//      dtmf frequencies in Hz = {697,770,852,941,1209,1336,1477,1633};
 #if F_CPU==12000000
 static const word tWord[8] = {487,538,596,658,845,934,1032,1142};
 #else
 #error Your MCU frequency is not supported.
 #endif
-static volatile word twordLow;      //DDS tuning word for rows
-static volatile word twordHigh;     //DDS tuning word for columns
-static volatile word phaccuLow;     //DDS phase accumulator for rows
-static volatile word phaccuHigh;    //DDS phase accumulator for columns
+static volatile word twordLf;       //DDS tuning word for LF (<1KHz)
+static volatile word twordHf;       //DDS tuning word for HF (>1KHz)
+static volatile word phaccuLf;      //DDS phase accumulator for LF
+static volatile word phaccuHf;      //DDS phase accumulator for HF
 
 void DtmfGenerator::init (void)
 {
@@ -71,9 +72,9 @@ bool DtmfGenerator::generateTone(char key)
         return false;
     }
     byte digitpos=pch-keypad;
-    twordHigh = tWord[(digitpos & 0x03) + 4];
-    twordLow = tWord[(digitpos >> 2)];
-    //Clear OCR2B on Compare Match, set OC2B at BOTTOM,(non-inverting mode).
+    twordHf = tWord[(digitpos & 0x03) + 4];
+    twordLf = tWord[(digitpos >> 2)];
+    //Connect PWM-pin to timer2: Clear OCR2B on Compare Match, set OC2B at BOTTOM, (non-inverting mode).
     bitSet(TCCR2A, COM2B1);
     bitClear(TCCR2A, COM2B0);
     bitSet(TIMSK2,TOIE2);               // timer interrupt on
@@ -94,11 +95,13 @@ void DtmfGenerator::stopTone()
 //**************************************************************************
 ISR(TIMER2_OVF_vect)
 {
-    phaccuHigh+=twordHigh;
-    phaccuLow+=twordLow;
-    byte pwmIndexHigh=phaccuHigh >> 8;
-    byte pwmIndexLow=phaccuLow >> 8;      // use upper 8 bits for phase accu as frequency information
-    // calculate PWM value: high frequency value + 3/4 low frequency value
-    byte pwmVal=pgm_read_byte_near(sine256 + (pwmIndexLow & 0x7F));
-    OCR2B = pgm_read_byte_near(sine256 + (pwmIndexHigh & 0x7F)) + pwmVal - (pwmVal>>2);
+    //increase phase accu
+    phaccuHf+=twordHf;
+    phaccuLf+=twordLf;
+    // use upper 8 bits of phase accu as frequency information
+    byte pwmIndexHf=phaccuHf >> 8;
+    byte pwmIndexLf=phaccuLf >> 8;
+    // calculate PWM value for DTMF = HF value + 3/4 LF value
+    byte pwmVal=pgm_read_byte_near(sine128 + (pwmIndexLf & 0x7F));
+    OCR2B = pgm_read_byte_near(sine128 + (pwmIndexHf & 0x7F)) + pwmVal - (pwmVal>>2);
 }
