@@ -50,9 +50,6 @@ static volatile word phaccuHigh;    //DDS phase accumulator for columns
 void DtmfGenerator::init (void)
 {
     noInterrupts();                     // disable all interrupts
-    //Clear OC2B on Compare Match, set OC2B at BOTTOM,(non-inverting mode).
-    bitSet(TCCR2A, COM2B1);
-    bitClear(TCCR2A, COM2B0);
     //Waveform Generation Mode Bit Description : Fast PWM = mode 3
     bitClear(TCCR2B,WGM22);
     bitSet(TCCR2A,WGM21);
@@ -76,7 +73,10 @@ bool DtmfGenerator::generateTone(char key)
     byte digitpos=pch-keypad;
     twordHigh = tWord[(digitpos & 0x03) + 4];
     twordLow = tWord[(digitpos >> 2)];
-    bitSet(TIMSK2,TOIE2); // timer interrupt on
+    //Clear OCR2B on Compare Match, set OC2B at BOTTOM,(non-inverting mode).
+    bitSet(TCCR2A, COM2B1);
+    bitClear(TCCR2A, COM2B0);
+    bitSet(TIMSK2,TOIE2);               // timer interrupt on
     pinMode(3, OUTPUT);                 // OCR2B-pin
     return true;
 }
@@ -84,8 +84,8 @@ bool DtmfGenerator::generateTone(char key)
 void DtmfGenerator::stopTone()
 {
     //tone off
-    bitClear(TIMSK2,TOIE2);
-    pinMode(3, INPUT);                 // OCR2B-pin
+    bitClear(TIMSK2,TOIE2);             // timer interrupt off
+    digitalWrite(3,0);                  // OCR2B remains low after last generated pulse
 }
 
 //**************************************************************************
