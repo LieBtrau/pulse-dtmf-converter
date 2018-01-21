@@ -62,7 +62,6 @@ void DtmfGenerator::init (void)
     bitClear(TCCR2B, CS22);
     bitClear(TCCR2B, CS21);
     bitSet(TCCR2B, CS20);
-    pinMode(3, OUTPUT);                 // OCR2B-pin
     interrupts();                       // Interrupts enabled
 }
 
@@ -78,6 +77,7 @@ bool DtmfGenerator::generateTone(char key)
     twordHigh = tWord[(digitpos & 0x03) + 4];
     twordLow = tWord[(digitpos >> 2)];
     bitSet(TIMSK2,TOIE2); // timer interrupt on
+    pinMode(3, OUTPUT);                 // OCR2B-pin
     return true;
 }
 
@@ -85,6 +85,7 @@ void DtmfGenerator::stopTone()
 {
     //tone off
     bitClear(TIMSK2,TOIE2);
+    pinMode(3, INPUT);                 // OCR2B-pin
 }
 
 //**************************************************************************
