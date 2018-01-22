@@ -65,7 +65,7 @@ void DtmfGenerator::init (void)
 
 bool DtmfGenerator::generateTone(char key)
 {
-    key = (key >= 'a' && key <= 'z' ? 'A' + key - 'a' : key);   // convert to upper case
+    key = (isLowerCase(key) ? 'A' + key - 'a' : key);   // convert to upper case
     char* pch= strchr(keypad, key);
     if(!pch)
     {

@@ -1,3 +1,7 @@
 ../pulse-dtmf-converter/pulse-dtmf-converter.ino
 ../pulse-dtmf-converter/dtmfgenerator.h
 ../pulse-dtmf-converter/dtmfgenerator.cpp
+../pulse-dtmf-converter/rotarydialer.h
+../pulse-dtmf-converter/rotarydialer.cpp
+../pulse-dtmf-converter/singletimer.h
+../pulse-dtmf-converter/singletimer.cpp

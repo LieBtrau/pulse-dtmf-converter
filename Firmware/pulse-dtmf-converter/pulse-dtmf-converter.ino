@@ -1,26 +1,30 @@
 #include "dtmfgenerator.h"
-
-#define LED_PIN 13
+#include "rotarydialer.h"
 
 DtmfGenerator dtmf;
+RotaryDialer rd(5);
 
 void setup()
 {
-    // Setup the LED :
-    pinMode(LED_PIN,OUTPUT);
     dtmf.init();
+    rd.init();
 }
 
 void loop()
 {
-    for(byte i=0;i<10;i++)
+    rd.update();
+    if(rd.available())
     {
-        digitalWrite(LED_PIN,1);
-        dtmf.generateTone('0'+i);
-        delay(50);
-        digitalWrite(LED_PIN,0);
-        dtmf.stopTone();
-        delay(100);
+        byte nr=rd.read();
     }
-    delay(3000);
+//    for(byte i=0;i<10;i++)
+//    {
+//        digitalWrite(LED_PIN,1);
+//        dtmf.generateTone('0'+i);
+//        delay(50);
+//        digitalWrite(LED_PIN,0);
+//        dtmf.stopTone();
+//        delay(100);
+//    }
+//    delay(3000);
 }
