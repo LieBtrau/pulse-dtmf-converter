@@ -1,11 +1,13 @@
 #include "dtmfgenerator.h"
 #include "rotarydialer.h"
+#include <avr/power.h>
 
 DtmfGenerator dtmf;
 RotaryDialer rd(5);
 
 void setup()
 {
+    reducePower();
     dtmf.init();
     rd.init();
 }
@@ -15,16 +17,22 @@ void loop()
     rd.update();
     if(rd.available())
     {
-        byte nr=rd.read();
+        byte dialedDigit=rd.read();
+        dtmf.generateTone('0'+dialedDigit);
+        delay(80);
+        dtmf.stopTone();
     }
-//    for(byte i=0;i<10;i++)
-//    {
-//        digitalWrite(LED_PIN,1);
-//        dtmf.generateTone('0'+i);
-//        delay(50);
-//        digitalWrite(LED_PIN,0);
-//        dtmf.stopTone();
-//        delay(100);
-//    }
-//    delay(3000);
+}
+
+void reducePower()
+{
+#ifdef ARDUINO_AVR_PROTRINKET3FTDI
+    power_twi_disable();
+    power_timer1_disable();
+    power_spi_disable();
+    power_usart0_disable();
+#elif ARDUINO_AVR_ATTINYX5
+    power_usi_disable();
+#endif
+    power_adc_disable();
 }
