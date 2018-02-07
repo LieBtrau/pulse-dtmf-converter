@@ -5,3 +5,5 @@
 ../pulse-dtmf-converter/rotarydialer.cpp
 ../pulse-dtmf-converter/singletimer.h
 ../pulse-dtmf-converter/singletimer.cpp
+../pulse-dtmf-converter/timer.cpp
+../pulse-dtmf-converter/timer.h

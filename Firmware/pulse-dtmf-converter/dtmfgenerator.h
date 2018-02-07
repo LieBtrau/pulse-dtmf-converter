@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef DTMFGENERATOR_H
 #define DTMFGENERATOR_H
-#include "Arduino.h"
+#include "timer.h"
 
 class DtmfGenerator
 {
@@ -30,7 +30,6 @@ public:
 private:
     //https://en.wikipedia.org/wiki/Dual-tone_multi-frequency_signaling
     const char* keypad = "123A456B789C*0#D"; // position for lookup into Freq. Table
-
 };
 
 #endif // DTMFGENERATOR_H

@@ -54,34 +54,14 @@ static volatile word phaccuHf;      //DDS phase accumulator for HF
 #ifdef ARDUINO_AVR_PROTRINKET3FTDI
 const byte dtmfpin=3;
 #elif ARDUINO_AVR_ATTINYX5
-const byte dtmfpin=4;
+const byte dtmfpin=1;                   //OC1A (pin 6)
 #endif
+static void setDuty();
+
 void DtmfGenerator::init (void)
 {
-    noInterrupts();                     // disable all interrupts
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-    //Waveform Generation Mode Bit Description : Fast PWM = mode 3
-    bitClear(TCCR2B,WGM22);
-    bitSet(TCCR2A,WGM21);
-    bitSet(TCCR2A,WGM20);
-#elif ARDUINO_AVR_ATTINYX5
-    //PWM mode : B enable
-    bitSet(GTCCR, PWM1B);
-    OCR1C=255;
-#endif
-
-    //Clock select : No prescaling
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-    bitClear(TCCR2B, CS22);
-    bitClear(TCCR2B, CS21);
-    bitSet(TCCR2B, CS20);
-#elif ARDUINO_AVR_ATTINYX5
-    bitClear(TCCR1,CS13);
-    bitClear(TCCR1,CS12);
-    bitClear(TCCR1,CS11);
-    bitSet(TCCR1,CS10);
-#endif
-    interrupts();                       // Interrupts enabled
+    timer.initialize();
+    timer.setPrescaler(Timer::NO_PRESCALING);
 }
 
 bool DtmfGenerator::generateTone(char key)
@@ -96,42 +76,19 @@ bool DtmfGenerator::generateTone(char key)
     twordHf = tWord[(digitpos & 0x03) + 4];
     twordLf = tWord[(digitpos >> 2)];
 
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-    //Connect PWM-pin to timer2: Clear OCR2B on Compare Match, set OC2B at BOTTOM, (non-inverting mode).
-    bitSet(TCCR2A, COM2B1);
-    bitClear(TCCR2A, COM2B0);
-    bitSet(TIMSK2,TOIE2);               // timer interrupt on
-#elif ARDUINO_AVR_ATTINYX5
-    //Connect PWM-pin to timer1: Clear OC1B on Compare Match, set OC1B at BOTTOM, (non-inverting mode).
-    bitSet(GTCCR, COM1B1);
-    bitClear(GTCCR, COM1B0);
-    bitSet(TIMSK, TOIE1);               // timer interrupt on
-#endif
-
+    timer.enablePwm();
+    timer.attachInterrupt(setDuty);
     pinMode(dtmfpin, OUTPUT);
     return true;
 }
 
 void DtmfGenerator::stopTone()
 {
-    //tone off
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-    bitClear(TIMSK2,TOIE2);             // timer interrupt off
-#elif ARDUINO_AVR_ATTINYX5
-    bitClear(TIMSK, TOIE1);
-#endif
+    timer.detachInterrupt();
     digitalWrite(dtmfpin,0);            // OCR2B remains low after last generated pulse
 }
 
-//**************************************************************************
-// Timer overflow interrupt service routine
-// interrupt names can be found in Arduino folder: ./hardware/tools/avr/avr/include/avr/
-//**************************************************************************
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-ISR(TIMER2_OVF_vect)
-#elif ARDUINO_AVR_ATTINYX5
-ISR(TIMER1_OVF_vect)
-#endif
+void setDuty()
 {
     //increase phase accu
     phaccuHf+=twordHf;
@@ -140,11 +97,8 @@ ISR(TIMER1_OVF_vect)
     byte pwmIndexHf=phaccuHf >> 8;
     byte pwmIndexLf=phaccuLf >> 8;
     // calculate PWM value for DTMF = HF value + 3/4 LF value
-    byte pwmVal=pgm_read_byte_near(sine128 + (pwmIndexLf & 0x7F));
-    byte ocr = pgm_read_byte_near(sine128 + (pwmIndexHf & 0x7F)) + pwmVal - (pwmVal>>2);
-#ifdef ARDUINO_AVR_PROTRINKET3FTDI
-    OCR2B = ocr;
-#elif ARDUINO_AVR_ATTINYX5
-    OCR1B = ocr;
-#endif
+    byte pwmLow = pgm_read_byte_near(sine128 + (pwmIndexLf & 0x7F));
+    byte pwmHigh = pgm_read_byte_near(sine128 + (pwmIndexHf & 0x7F));
+    byte ocr = pwmHigh + pwmLow - (pwmLow>>2);
+    timer.setPwmDuty(ocr);
 }
