@@ -37,6 +37,7 @@ static const byte sine128[] PROGMEM =
 //      where dfreq = desired frequency, in [Hz]
 //      where bitwidth = number of bits in tuning word, here 15bit
 //
+//https://en.wikipedia.org/wiki/Dual-tone_multi-frequency_signaling
 //      dtmf frequencies in Hz = {697,770,852,941,1209,1336,1477,1633};
 #if F_CPU==8000000
 static const word tWord[8] = {731,807,893,987,1268,1401,1549,1712};
@@ -61,7 +62,7 @@ static void setDuty();
 void DtmfGenerator::init (void)
 {
     timer.initialize();
-    timer.setPrescaler(Timer::NO_PRESCALING);
+    timer.setPrescaler(Timer::CK1);
 }
 
 bool DtmfGenerator::generateTone(char key)
@@ -76,7 +77,7 @@ bool DtmfGenerator::generateTone(char key)
     twordHf = tWord[(digitpos & 0x03) + 4];
     twordLf = tWord[(digitpos >> 2)];
 
-    timer.enablePwm();
+    timer.pwm();
     timer.attachInterrupt(setDuty);
     pinMode(dtmfpin, OUTPUT);
     return true;
@@ -84,6 +85,7 @@ bool DtmfGenerator::generateTone(char key)
 
 void DtmfGenerator::stopTone()
 {
+    timer.disablePwm();
     timer.detachInterrupt();
     digitalWrite(dtmfpin,0);            // OCR2B remains low after last generated pulse
 }

@@ -28,7 +28,6 @@ public:
     bool generateTone(char key);
     void stopTone();
 private:
-    //https://en.wikipedia.org/wiki/Dual-tone_multi-frequency_signaling
     const char* keypad = "123A456B789C*0#D"; // position for lookup into Freq. Table
 };
 

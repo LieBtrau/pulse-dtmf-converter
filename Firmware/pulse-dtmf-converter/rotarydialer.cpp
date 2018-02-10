@@ -4,9 +4,8 @@ RotaryDialer::RotaryDialer(byte pulsePin):_pulsePin(pulsePin){}
 
 void RotaryDialer::init()
 {
-    pinMode(_pulsePin, INPUT);
-    _debouncer.attach(_pulsePin);
-    _debouncer.interval(5);                             // interval in ms
+    _debouncer.attach(_pulsePin, INPUT);
+    _debouncer.interval(10);                            // interval in ms
 }
 
 void RotaryDialer::update()
@@ -36,7 +35,7 @@ bool RotaryDialer::available()
 byte RotaryDialer::read()
 {
     byte number=_pulseCounter==10 ? 0 : _pulseCounter;
-    _dataReady=false;                                       //Make sure each number is read only once
+    _dataReady=false;                                   //Make sure each number is read only once
     _pulseCounter=0;
     return number;
 }

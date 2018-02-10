@@ -1,7 +1,24 @@
+/*
+DtmfGenerator: library for timer
+Copyright (C) 2018  Christoph Tack
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "timer.h"
 
 Timer timer;    //pre-instantiating (for ISR)
-
 
 void Timer::initialize()
 {
@@ -26,12 +43,13 @@ void Timer::setPrescaler(PRESCALER p)
     noInterrupts();                     // disable all interrupts
     switch(p)
     {
-    case NO_PRESCALING:
+    case CK1:
     #ifdef ARDUINO_AVR_PROTRINKET3FTDI
         bitClear(TCCR2B, CS22);
         bitClear(TCCR2B, CS21);
         bitSet(TCCR2B, CS20);
     #elif ARDUINO_AVR_ATTINYX5
+        bitClear(PLLCSR, PCKE);           //Don't clock from PCK, because its source is the internal R/C.
         bitClear(TCCR1,CS13);
         bitClear(TCCR1,CS12);
         bitClear(TCCR1,CS11);
@@ -44,7 +62,7 @@ void Timer::setPrescaler(PRESCALER p)
     interrupts();                       // Interrupts enabled
 }
 
-void Timer::enablePwm()
+void Timer::pwm()
 {
 #ifdef ARDUINO_AVR_PROTRINKET3FTDI
     //Connect PWM-pin to timer2: Clear OCR2B on Compare Match, set OC2B at BOTTOM, (non-inverting mode).
@@ -57,6 +75,19 @@ void Timer::enablePwm()
 #endif
 }
 
+void Timer::disablePwm()
+{
+#ifdef ARDUINO_AVR_PROTRINKET3FTDI
+    //Connect PWM-pin to timer2: Clear OCR2B on Compare Match, set OC2B at BOTTOM, (non-inverting mode).
+    bitClear(TCCR2A, COM2B1);
+    bitClear(TCCR2A, COM2B0);
+#elif ARDUINO_AVR_ATTINYX5
+    //Connect PWM-pin to timer1: Clear OC1A on Compare Match, set OC1A at BOTTOM, (non-inverting mode).
+    bitClear(TCCR1, COM1A1);
+    bitClear(TCCR1, COM1A0);
+#endif
+
+}
 
 void Timer::detachInterrupt()
 {
@@ -85,6 +116,7 @@ void Timer::setPwmDuty(byte ocr)
     OCR1A = ocr;
 #endif
 }
+
 
 //**************************************************************************
 // Timer overflow interrupt service routine
