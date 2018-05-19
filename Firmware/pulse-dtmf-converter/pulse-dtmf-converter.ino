@@ -6,24 +6,68 @@
 DtmfGenerator dtmf;
 RotaryDialer rd(0); // pin5
 
+const int modePin = 2; // pin7
+
+int mode = 1;  // 0: (modePin LOW)  original - tone after each digit
+               // 1: (modePin HIGH) gather all digits then send tones
+unsigned long lastUpdate = 0;
+int i = 0;
+int k = 0;
+byte n[200];
+
 void setup()
 {
+    pinMode(modePin,INPUT_PULLUP);
+    if(digitalRead(modePin) == LOW)
+    {
+        mode = 0;
+    }
+
     reducePower();
     dtmf.init();
     rd.init();
+
+    i = 0;
+    k = 0;
 }
 
 void loop()
 {
-    sleepNow();
-    rd.update();
-    if(rd.available())
+    if(mode == 0)
     {
-        //Pulse dial digit decoded, now create its DTMF equivalent
-        byte dialedDigit=rd.read();
-        dtmf.generateTone('0'+dialedDigit);
-        delay(80);
-        dtmf.stopTone();
+        sleepNow();
+        rd.update();
+        if(rd.available())
+        {
+            // Pulse dial digit decoded, now create its DTMF equivalent
+            byte dialedDigit=rd.read();
+            dtmf.generateTone('0'+dialedDigit);
+            delay(80);
+            dtmf.stopTone();
+        }
+    }
+    else
+    {
+        sleepNow();
+        rd.update();
+        if(rd.available())
+        {
+            n[i] = rd.read();
+            i++;
+            lastUpdate = millis() + 3000;
+        }
+
+        if((i > 0) && (millis() > lastUpdate))
+        {
+            for(k = 0; k < i; k++)
+            {
+                dtmf.generateTone('0' + n[k]);
+                delay(80);
+                dtmf.stopTone();
+                delay(80);
+            }
+            i = 0;
+        }
     }
 }
 
