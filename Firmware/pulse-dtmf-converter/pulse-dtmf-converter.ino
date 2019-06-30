@@ -10,6 +10,8 @@ const int modePin = 2; // pin7
 
 int mode = 1;  // 0: (modePin LOW)  original - tone after each digit
                // 1: (modePin HIGH) gather all digits then send tones
+const bool REVERSE_DIAL_MODE = false; // set to true for reverse dial systems (e.g. in use on New-Zealand)
+
 unsigned long lastUpdate = 0;
 int i = 0;
 int k = 0;
@@ -41,6 +43,10 @@ void loop()
         {
             // Pulse dial digit decoded, now create its DTMF equivalent
             byte dialedDigit=rd.read();
+            if(REVERSE_DIAL_MODE && dialedDigit!=10)
+            {
+                dialedDigit = 10 - dialedDigit;
+            }
             dtmf.generateTone('0'+dialedDigit);
             delay(80);
             dtmf.stopTone();
@@ -61,6 +67,10 @@ void loop()
         {
             for(k = 0; k < i; k++)
             {
+                if(REVERSE_DIAL_MODE && n[k]!=10)
+                {
+                    n[k] = 10 - n[k];
+                }
                 dtmf.generateTone('0' + n[k]);
                 delay(80);
                 dtmf.stopTone();
