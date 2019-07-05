@@ -32,11 +32,10 @@ bool RotaryDialer::available()
     return _dataReady;
 }
 
-byte RotaryDialer::read()
+byte RotaryDialer::readPulses()
 {
-    byte number=_pulseCounter==10 ? 0 : _pulseCounter;
+    byte number=_pulseCounter;
     _dataReady=false;                                   //Make sure each number is read only once
     _pulseCounter=0;
     return number;
 }
-

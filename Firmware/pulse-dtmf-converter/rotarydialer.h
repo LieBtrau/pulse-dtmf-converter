@@ -12,7 +12,7 @@ public:
     void init();
     void update();
     bool available();
-    byte read();
+    byte readPulses();
 private:
     byte _pulsePin;
     Bounce _debouncer;
