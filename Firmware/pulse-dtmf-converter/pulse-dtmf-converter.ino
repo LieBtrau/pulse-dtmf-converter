@@ -71,6 +71,7 @@ void loop()
             for (byte k = 0; k < pulsesCtr; k++)
             {
                 pulsesToDtmf(pulsesBuffer[k]);
+                delay(80);
             }
             pulsesCtr = 0;
         }
